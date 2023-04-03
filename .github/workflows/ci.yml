@@ -1,0 +1,125 @@
+# D2L Github Actions Workflow
+
+name: Build and Publish
+
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "gh-actions" ]
+  pull_request:
+    branches: [ "gh-actions" ]
+
+jobs:
+  build_and_publish:
+    name: Build & Publish
+    if: github.repository == 'd2l-ai/d2l-en'
+    runs-on: self-hosted
+    defaults:
+      run:
+        # run bash in login mode for conda activate
+        shell: bash -el {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          # preserves generated files from last build; necessary for cache restoration
+          # https://github.com/actions/checkout/issues/430#issuecomment-810950736
+          # requires git>2.18 on runner machine
+          clean: false
+
+      - name: Setup Environment Variables
+        uses: ./.github/actions/setup_env_vars
+
+      # TODO: Only for debugging; remove later
+      - name: Echo Variables
+        run: |
+          echo "Repository Name: ${{ env.REPO_NAME }}"
+          echo "Target Branch: ${{ env.TARGET_BRANCH }}"
+          echo "LANG: ${{ env.LANG }}"
+          echo "TASK: ${{ env.TASK }}"
+          echo "CONDA_ENV_NAME: ${{ env.CONDA_ENV_NAME }}"
+          echo "SHORT_SHA: ${{ env.SHORT_SHA }}"
+          echo "PR_NUMBER: ${{ env.PR_NUMBER }}"
+          echo "JOB_NAME: ${{ env.JOB_NAME }}"
+
+      - name: Set up Conda environment
+        run: |
+          conda env update -n ${{ env.CONDA_ENV_NAME }} -f static/gh-build.yml
+          source activate ${{ env.CONDA_ENV_NAME }}
+          pip install git+https://github.com/d2l-ai/d2l-book
+          pip list
+          nvidia-smi
+
+      - name: Sanity Check
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          d2lbook build outputcheck tabcheck
+          # TODO: Add checks for all frameworks config correctly for GPUs
+
+      - name: Execute Notebooks [PyTorch]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          ./static/cache.sh restore _build/eval/data
+          d2lbook build eval
+          d2lbook build slides --tab pytorch
+          ./static/cache.sh store _build/eval/data
+
+      - name: Execute Notebooks [Jax]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          ./static/cache.sh restore _build/eval_jax/data
+          export XLA_PYTHON_CLIENT_MEM_FRACTION=.70
+          export TF_CPP_MIN_LOG_LEVEL=3
+          export TF_FORCE_GPU_ALLOW_GROWTH=true
+          d2lbook build eval --tab jax
+          ./static/cache.sh store _build/eval_jax/data
+
+      - name: Execute Notebooks [TensorFlow]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          ./static/cache.sh restore _build/eval_tensorflow/data
+          export TF_CPP_MIN_LOG_LEVEL=3
+          export TF_FORCE_GPU_ALLOW_GROWTH=true
+          d2lbook build eval --tab tensorflow
+          ./static/cache.sh store _build/eval_tensorflow/data
+
+      - name: Execute Notebooks [MXNet]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          # Use CUDA 10.2 & CUDNN 8.3.1 for MXNet v1.7.0
+          export PATH=/usr/local/cuda-10.2/bin:$PATH
+          export LD_LIBRARY_PATH=/usr/local/cuda-10.2/lib64:$LD_LIBRARY_PATH
+          ./static/cache.sh restore _build/eval_mxnet/data
+          d2lbook build eval --tab mxnet
+          ./static/cache.sh store _build/eval_mxnet/data
+
+      - name: Build HTML
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          ./static/build_html.sh ${{ env.TARGET_BRANCH }} ${{ env.JOB_NAME }}
+
+      - name: Build PDF [PyTorch]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          d2lbook build pdf
+
+      - name: Build PDF [MXNet]
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          d2lbook build pdf --tab mxnet
+
+      - name: Publish Preview
+        if: ${{ env.TARGET_BRANCH != 'release' }}
+        run: |
+          source activate ${{ env.CONDA_ENV_NAME }}
+          d2lbook deploy html pdf --s3 s3://preview.d2l.ai/${{ env.JOB_NAME }}
+
+      - name: Comment on PR
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v2.0.0
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            Job PR-${{ github.event.number }}-${{ env.SHORT_SHA }} is done.
+            Check the results at http://preview.d2l.ai/${{ env.JOB_NAME }}
+
