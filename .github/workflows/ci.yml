@@ -109,7 +109,7 @@ jobs:
           d2lbook build pdf --tab mxnet
 
       - name: Publish Preview
-        if: ${{ env.TARGET_BRANCH != 'release' }}
+        if: ${{ (env.TARGET_BRANCH != 'release') || (github.event_name == 'pull_request') }}
         run: |
           source activate ${{ env.CONDA_ENV_NAME }}
           d2lbook deploy html pdf --s3 s3://preview.d2l.ai/${{ env.JOB_NAME }}
