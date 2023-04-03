@@ -102,6 +102,9 @@ jobs:
           export LD_LIBRARY_PATH=/usr/local/cuda-10.2/lib64:$LD_LIBRARY_PATH
           echo "PATH=$PATH"
           echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+          # MXNet doesn't support numpy>=1.24
+          # https://github.com/apache/mxnet/issues/21165
+          pip install --upgrade numpy<=1.23
           ./static/cache.sh restore _build/eval_mxnet/data
           d2lbook build eval --tab mxnet
           ./static/cache.sh store _build/eval_mxnet/data
