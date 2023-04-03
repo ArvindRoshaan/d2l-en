@@ -99,7 +99,7 @@ The converse holds for a row with a missing `RoofType` value.
 ```{.python .input}
 %%tab all
 inputs, targets = data.iloc[:, 0:2], data.iloc[:, 2]
-inputs = pd.get_dummies(inputs, dummy_na=True)
+inputs = pd.get_dummies(inputs, dummy_na=True, dtype=int)
 print(inputs)
 ```
 
