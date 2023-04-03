@@ -13,7 +13,7 @@ jobs:
   build_and_publish:
     name: Build & Publish
     if: github.repository == 'd2l-ai/d2l-en'
-    runs-on: self-hosted
+    runs-on: p3.16xl
     defaults:
       run:
         # run bash in login mode for conda activate
@@ -45,6 +45,7 @@ jobs:
       - name: Set up Conda environment
         run: |
           conda env update -n ${{ env.CONDA_ENV_NAME }} -f static/gh-build.yml
+          source ~/.bashrc
           source activate ${{ env.CONDA_ENV_NAME }}
           pip install git+https://github.com/d2l-ai/d2l-book
           pip list
