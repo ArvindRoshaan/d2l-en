@@ -59,6 +59,8 @@ jobs:
       - name: Execute Notebooks [PyTorch]
         run: |
           conda activate ${{ env.CONDA_ENV_NAME }}
+          echo "PATH=$PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           ./static/cache.sh restore _build/eval/data
           d2lbook build eval
           d2lbook build slides --tab pytorch
@@ -67,6 +69,8 @@ jobs:
       - name: Execute Notebooks [Jax]
         run: |
           conda activate ${{ env.CONDA_ENV_NAME }}
+          echo "PATH=$PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           ./static/cache.sh restore _build/eval_jax/data
           export XLA_PYTHON_CLIENT_MEM_FRACTION=.70
           export TF_CPP_MIN_LOG_LEVEL=3
@@ -80,6 +84,8 @@ jobs:
           # Setup CUDNN PATH for Tensorflow
           CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
+          echo "PATH=$PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           ./static/cache.sh restore _build/eval_tensorflow/data
           export TF_CPP_MIN_LOG_LEVEL=3
           export TF_FORCE_GPU_ALLOW_GROWTH=true
@@ -92,6 +98,8 @@ jobs:
           # Use CUDA 10.2 & CUDNN 8.3.1 for MXNet v1.7.0
           export PATH=/usr/local/cuda-10.2/bin:$PATH
           export LD_LIBRARY_PATH=/usr/local/cuda-10.2/lib64:$LD_LIBRARY_PATH
+          echo "PATH=$PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
           ./static/cache.sh restore _build/eval_mxnet/data
           d2lbook build eval --tab mxnet
           ./static/cache.sh store _build/eval_mxnet/data
