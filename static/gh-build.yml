@@ -17,7 +17,4 @@ dependencies:
     - -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
     - flax==0.6.8
     - syne-tune[gpsearchers]==0.3.2
-variables:
-    # Setup CUDNN PATH for Tensorflow
-    CUDNN_PATH: "'$(dirname $(python -c \"import nvidia.cudnn;print(nvidia.cudnn.__file__)\"))'"
-    LD_LIBRARY_PATH: "'$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib'"
+

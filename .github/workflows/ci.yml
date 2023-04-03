@@ -77,6 +77,9 @@ jobs:
       - name: Execute Notebooks [TensorFlow]
         run: |
           conda activate ${{ env.CONDA_ENV_NAME }}
+          # Setup CUDNN PATH for Tensorflow
+          CUDNN_PATH=$(dirname $(python -c "import nvidia.cudnn;print(nvidia.cudnn.__file__)"))
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/:$CUDNN_PATH/lib
           ./static/cache.sh restore _build/eval_tensorflow/data
           export TF_CPP_MIN_LOG_LEVEL=3
           export TF_FORCE_GPU_ALLOW_GROWTH=true
