@@ -41,6 +41,8 @@ jobs:
           echo "SHORT_SHA: ${{ env.SHORT_SHA }}"
           echo "PR_NUMBER: ${{ env.PR_NUMBER }}"
           echo "JOB_NAME: ${{ env.JOB_NAME }}"
+          echo "PATH=$PATH"
+          echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
       - name: Set up Conda environment
         run: |
