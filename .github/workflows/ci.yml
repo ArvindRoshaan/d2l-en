@@ -45,20 +45,20 @@ jobs:
       - name: Set up Conda environment
         run: |
           conda env update -n ${{ env.CONDA_ENV_NAME }} -f static/gh-build.yml
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           pip install git+https://github.com/d2l-ai/d2l-book
           pip list
           nvidia-smi
 
       - name: Sanity Check
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           d2lbook build outputcheck tabcheck
           # TODO: Add checks for all frameworks config correctly for GPUs
 
       - name: Execute Notebooks [PyTorch]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           ./static/cache.sh restore _build/eval/data
           d2lbook build eval
           d2lbook build slides --tab pytorch
@@ -66,7 +66,7 @@ jobs:
 
       - name: Execute Notebooks [Jax]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           ./static/cache.sh restore _build/eval_jax/data
           export XLA_PYTHON_CLIENT_MEM_FRACTION=.70
           export TF_CPP_MIN_LOG_LEVEL=3
@@ -76,7 +76,7 @@ jobs:
 
       - name: Execute Notebooks [TensorFlow]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           ./static/cache.sh restore _build/eval_tensorflow/data
           export TF_CPP_MIN_LOG_LEVEL=3
           export TF_FORCE_GPU_ALLOW_GROWTH=true
@@ -85,7 +85,7 @@ jobs:
 
       - name: Execute Notebooks [MXNet]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           # Use CUDA 10.2 & CUDNN 8.3.1 for MXNet v1.7.0
           export PATH=/usr/local/cuda-10.2/bin:$PATH
           export LD_LIBRARY_PATH=/usr/local/cuda-10.2/lib64:$LD_LIBRARY_PATH
@@ -95,23 +95,23 @@ jobs:
 
       - name: Build HTML
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           ./static/build_html.sh ${{ env.TARGET_BRANCH }} ${{ env.JOB_NAME }}
 
       - name: Build PDF [PyTorch]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           d2lbook build pdf
 
       - name: Build PDF [MXNet]
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           d2lbook build pdf --tab mxnet
 
       - name: Publish Preview
         if: ${{ (env.TARGET_BRANCH != 'release') || (github.event_name == 'pull_request') }}
         run: |
-          source activate ${{ env.CONDA_ENV_NAME }}
+          conda activate ${{ env.CONDA_ENV_NAME }}
           d2lbook deploy html pdf --s3 s3://preview.d2l.ai/${{ env.JOB_NAME }}
 
       - name: Comment on PR
