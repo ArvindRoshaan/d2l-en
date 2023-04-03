@@ -45,7 +45,6 @@ jobs:
       - name: Set up Conda environment
         run: |
           conda env update -n ${{ env.CONDA_ENV_NAME }} -f static/gh-build.yml
-          source ~/.bashrc
           source activate ${{ env.CONDA_ENV_NAME }}
           pip install git+https://github.com/d2l-ai/d2l-book
           pip list
